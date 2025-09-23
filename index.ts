@@ -46,7 +46,7 @@ const fs: typeof fsType = require('fs');
   // Special case: -v or --version with no other parameters
   const onlyVersion = (args.length === 1 && (args[0] === '-v' || args[0] === '--version'));
   if (hasFlag('version') || onlyVersion) {
-    console.log('v0.1.1');
+    console.log('v0.1.2');
     return;
   }
 
@@ -86,6 +86,10 @@ const fs: typeof fsType = require('fs');
   // Browser setup
   const startTime = Date.now();
   log("Started: " + new Date().toLocaleString());
+  if (!force && outputFile !== '-' && fs.existsSync(outputFile)) {
+    console.error(`Output file '${outputFile}' already exists. Use --force or -f to overwrite.`);
+    process.exit(2);
+  }
   log(`Navigating to ${url}`);
   const launchOpts: puppeteerType.LaunchOptions & Record<string, any> = headless
     ? { headless: true }
