@@ -39,7 +39,7 @@ Usage: graphics-error-scraper [options]
 ### Example
 
 ```
-node index.js -u https://webctrl.example.com -U admin -p hvac1234 -o results.json
+graphics-error-scraper -u https://webctrl.example.com -U admin -p hvac1234 -o results.json
 ```
 
 - The tool will log in to the specified WebCTRL system, expand all geographic tree nodes, and check each graphic for errors.
