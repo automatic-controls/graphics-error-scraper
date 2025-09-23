@@ -1,0 +1,18 @@
+{
+  "name": "graphics-error-scraper",
+  "version": "0.1.0",
+  "description": "Scrapes a WebCTRL system to look for graphics errors.",
+  "license": "BSD-3-Clause",
+  "author": "Cameron Vogt",
+  "scripts": {
+    "compile": "tsc -t es2022 -m commonjs index.ts",
+    "go": "tsc -t es2022 -m commonjs index.ts && node index.js",
+    "exec": "node index.js",
+    "exe": "del /F *.exe *.blob *.js & tsc -t es2022 -m commonjs index.ts && node -e \"require('fs').copyFileSync(process.execPath, 'graphics-error-scraper.exe')\" && \"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.26100.0\\x64\\signtool\" remove /s graphics-error-scraper.exe && node --experimental-sea-config sea-config.json && npx postject graphics-error-scraper.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 && del /F *.blob"
+  },
+  "devDependencies": {
+    "@types/node": "^22.x.x",
+    "typescript": "^5.x.x",
+    "puppeteer": "^24.x.x"
+  }
+}
