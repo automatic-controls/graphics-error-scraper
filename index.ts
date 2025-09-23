@@ -46,7 +46,7 @@ const fs: typeof fsType = require('fs');
   // Special case: -v or --version with no other parameters
   const onlyVersion = (args.length === 1 && (args[0] === '-v' || args[0] === '--version'));
   if (hasFlag('version') || onlyVersion) {
-    console.log('v0.1.0');
+    console.log('v0.1.1');
     return;
   }
 
@@ -183,7 +183,11 @@ const fs: typeof fsType = require('fs');
 
   const errors = [];
   for (const g of await navFrame.$$('.TreeCtrl-outer[id^=geoTree] .TreeCtrl-content')) {
-    await g.click();
+    try {
+      await g.click();
+    } catch (ex) {
+      continue;
+    }
     await wait();
     if (await page.$('#actButtonSpan > span[title="View graphics"]') && await page.$('#errorIndication:not([style*="display: none"])')) {
       const e = await page.evaluate(() => {
