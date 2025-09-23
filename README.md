@@ -27,7 +27,7 @@ Usage: graphics-error-scraper [options]
   -p, --password <password>   Password (required)
   -o, --output <file>         Output file (default: errors.json, use - for stdout)
   -f, --force                 Overwrite output file if it exists
-  -i, --ignoressl             Ignore SSL certificate errors
+  -i, --ignoressl             Ignore SSL certificate errors (required for insecure HTTP)
   -t, --timeout <ms>          Timeout for page actions in milliseconds (default: 180000)
   -h, --headless <bool>       Headless mode (true/false, default: true)
   -v, --verbose               Verbose logging (flag or "true")
