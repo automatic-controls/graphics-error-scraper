@@ -44,3 +44,25 @@ graphics-error-scraper -u https://webctrl.example.com -U admin -p hvac1234 -o re
 
 - The tool will log in to the specified WebCTRL system, expand all geographic tree nodes, and check each graphic for errors.
 - Results are saved to the specified output file in JSON format, or printed to the console if `-o -` is used.
+
+```json
+[
+  {
+    "path": "Automatic Controls Equipment Systems / Office Building / Utilities / Building Electric Meter Totalizer",
+    "actionErrors": [
+      {
+        "details": "Uncaught Could not find trend report or an embedded trend at real_pwr_tn",
+        "type": "UI_Error",
+        "number": 0,
+        "line": 449
+      },
+      {
+        "details": "Uncaught Error #3004: The expression \"real_pwr/units\" cannot be evaluated - no child \"real_pwr\" under location \"/trees/geographic/#office_area/#utilities_area/#aces_electric_meter_totalizer\".",
+        "type": "UI_Error",
+        "number": 0,
+        "line": 454
+      }
+    ]
+  }
+]
+```
