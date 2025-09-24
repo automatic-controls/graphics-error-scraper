@@ -46,7 +46,7 @@ const fs: typeof fsType = require('fs');
   // Special case: -v or --version with no other parameters
   const onlyVersion = (args.length === 1 && (args[0] === '-v' || args[0] === '--version'));
   if (hasFlag('version') || onlyVersion) {
-    console.log('v0.1.2');
+    console.log('v0.1.3');
     return;
   }
 
@@ -60,7 +60,7 @@ const fs: typeof fsType = require('fs');
 
   if (!url || !username || !password) {
     console.error(
-      'Usage: graphics-error-scraper [options]\n' +
+      '\nUsage: graphics-error-scraper [options]\n' +
       '  -u, --url <url>             Target URL (required)\n' +
       '  -U, --username <username>   Username (required)\n' +
       '  -p, --password <password>   Password (required)\n' +
@@ -70,7 +70,8 @@ const fs: typeof fsType = require('fs');
       '  -t, --timeout <ms>          Timeout for page actions in milliseconds (default: 180000)\n' +
       '  -h, --headless <bool>       Headless mode (true/false, default: true)\n' +
       '  -v, --verbose               Verbose logging (flag or "true")\n' +
-      '      --version, -v           Print version and exit'
+      '      --version, -v           Print version and exit\n' +
+      '\nFor more information, see https://github.com/automatic-controls/graphics-error-scraper\n'
     );
     process.exit(1);
   }
@@ -184,16 +185,56 @@ const fs: typeof fsType = require('fs');
       return s;
     });
   }
-
-  const errors = [];
-  for (const g of await navFrame.$$('.TreeCtrl-outer[id^=geoTree] .TreeCtrl-content')) {
-    try {
-      await g.click();
-    } catch (ex) {
-      continue;
+  async function getLocationInfo() {
+    return await page.evaluate(() => {
+      const ret: Record<string, string> = {};
+      const window = (document.getElementById('actionContent') as HTMLIFrameElement)?.contentWindow;
+      if (!window) {
+        return ret;
+      }
+      {
+        const base = window?.document.getElementsByTagName('base');
+        if (base && base.length > 0) {
+          const href = base[0].href;
+          if (href) {
+            const m = /\/([^\/]+\.view)\/lvl5\//g.exec(href);
+            if (m) {
+              ret.graphicFile = m[1];
+            }
+          }
+        }
+      }
+      {
+        //@ts-ignore
+        const gql = window.frameManager?.treeGqlLocation;
+        if (gql) {
+          ret.gqlPath = gql;
+        }
+      }
+      {
+        const m = /\[[^:]+:[^:]+:([^\]]+?):[^\]:]+\]/g.exec(window.document.title);
+        if (m) {
+          ret.graphicName = m[1];
+        }
+      }
+      return ret;
+    });
+  }
+  async function hasMultipleGraphics() {
+    return await page.evaluate(() => {
+      return (document.querySelector('#actButtonSpan > span[title="View graphics"] > img:last-child') as HTMLImageElement)?.style.display !== 'none';
+    });
+  }
+  const errors: Record<string, any>[] = [];
+  // Set url property to undefined if present in any error object
+  const cleanList = (arr: any[]) => arr.map(obj => {
+    if (obj && typeof obj === 'object' && 'url' in obj) {
+      return { ...obj, url: undefined };
     }
-    await wait();
-    if (await page.$('#actButtonSpan > span[title="View graphics"]') && await page.$('#errorIndication:not([style*="display: none"])')) {
+    return obj;
+  });
+  async function handleErrors(g: any) {
+    if (await page.$('#errorIndication:not([style*="display: none"])')) {
       const e = await page.evaluate(() => {
         return {
           //@ts-ignore
@@ -204,18 +245,48 @@ const fs: typeof fsType = require('fs');
           infoMessages: DisplayError.getInfoMessages()
         };
       });
-      // Set url property to undefined if present in any error object
-      const cleanList = (arr: any[]) => arr.map(obj => {
-        if (obj && typeof obj === 'object' && 'url' in obj) {
-          return { ...obj, url: undefined };
-        }
-        return obj;
-      });
-      const errorObj: any = { path: await getDisplayPath(g) };
+      const errorObj: Record<string, any> = { displayPath: await getDisplayPath(g) };
+      const locInfo = await getLocationInfo();
+      if (locInfo.gqlPath) errorObj.gqlPath = locInfo.gqlPath;
+      if (locInfo.graphicName) errorObj.graphicName = locInfo.graphicName;
+      if (locInfo.graphicFile) errorObj.graphicFile = locInfo.graphicFile;
       if (e.mainErrors && e.mainErrors.length > 0) errorObj.mainErrors = cleanList(e.mainErrors);
       if (e.actionErrors && e.actionErrors.length > 0) errorObj.actionErrors = cleanList(e.actionErrors);
       if (e.infoMessages && e.infoMessages.length > 0) errorObj.infoMessages = cleanList(e.infoMessages);
       errors.push(errorObj);
+    }
+  }
+  for (const g of await navFrame.$$('.TreeCtrl-outer[id^=geoTree] .TreeCtrl-content')) {
+    try {
+      await g.click();
+    } catch (ex) {
+      continue;
+    }
+    await wait();
+    if (await page.$('#actButtonSpan > span[title="View graphics"]')) {
+      if (await hasMultipleGraphics()) {
+        await page.locator('#actButtonSpan > span[title="View graphics"] > img:last-child').click();
+        await wait();
+        const frame = await (await page.mainFrame().$('#actioncategories'))?.contentFrame();
+        if (frame) {
+          const len = (await frame.$$('#content > .MenuItem-base')).length;
+          for (let i = 1; i <= len; ++i) {
+            if (i > 1) {
+              await page.locator('#actButtonSpan > span[title="View graphics"] > img:last-child').click();
+              await wait();
+            }
+            const x = await frame.$(`#content > .MenuItem-base:nth-child(${i})`);
+            if (!x) {
+              break;
+            }
+            await x.click();
+            await wait();
+            await handleErrors(g);
+          }
+        }
+      } else {
+        await handleErrors(g);
+      }
     }
   }
   if (outputFile === '-') {

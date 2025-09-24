@@ -48,19 +48,16 @@ graphics-error-scraper -u https://webctrl.example.com -U admin -p hvac1234 -o re
 ```json
 [
   {
-    "path": "Automatic Controls Equipment Systems / Office Building / Utilities / Building Electric Meter Totalizer",
+    "displayPath": "Automatic Controls Equipment Systems / Office Building / Utilities / Building Electric Meter Totalizer",
+    "gqlPath": "#aces_electric_meter_totalizer",
+    "graphicName": "Default",
+    "graphicFile": "aces_electric_meter_totalizer.view",
     "actionErrors": [
       {
         "details": "Uncaught Could not find trend report or an embedded trend at real_pwr_tn",
         "type": "UI_Error",
         "number": 0,
         "line": 449
-      },
-      {
-        "details": "Uncaught Error #3004: The expression \"real_pwr/units\" cannot be evaluated - no child \"real_pwr\" under location \"/trees/geographic/#office_area/#utilities_area/#aces_electric_meter_totalizer\".",
-        "type": "UI_Error",
-        "number": 0,
-        "line": 454
       }
     ]
   }
